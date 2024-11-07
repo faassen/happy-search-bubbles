@@ -1,4 +1,6 @@
-use iri_string::types::{IriAbsoluteString, IriRelativeString};
+use iri_string::types::IriAbsoluteString;
+
+use crate::topic::Topic;
 
 #[derive(Debug)]
 pub struct Indexable {
@@ -14,19 +16,8 @@ pub enum Scope {
 }
 
 #[derive(Debug)]
-pub struct Topic {
-    pub title: String,
-    pub descriptions: Vec<TopicDescription>,
-}
-
-#[derive(Debug)]
-pub enum TopicDescription {
-    Wikipedia(IriAbsoluteString),
-    WikiData(IriAbsoluteString),
-}
-
-#[derive(Debug)]
 pub struct Bubble {
+    pub(super) title: String,
     pub(super) topic: Topic,
     pub(super) indexables: Vec<Indexable>,
     pub(super) not_indexables: Vec<Indexable>,

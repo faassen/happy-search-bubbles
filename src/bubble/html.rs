@@ -1,35 +1,40 @@
-use super::model::{Bubble, Topic};
-
 use scraper::{error::SelectorErrorKind, Html, Selector};
+use thiserror::Error;
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum BubbleLoadingError {
+use crate::topic::{Topic, TopicParseError};
+
+use super::model::Bubble;
+
+#[derive(Error, Debug, PartialEq, Eq)]
+pub enum BubbleParseError {
+    #[error("Missing title element in HTML document")]
     MissingTitle,
+    #[error("Could not parse topic")]
+    TopicError(#[from] TopicParseError),
+    #[error("Selector error: {0}")]
     SelectorError(String),
 }
 
-impl<'a> From<SelectorErrorKind<'a>> for BubbleLoadingError {
+impl<'a> From<SelectorErrorKind<'a>> for BubbleParseError {
     fn from(error: SelectorErrorKind<'a>) -> Self {
-        BubbleLoadingError::SelectorError(error.to_string())
+        BubbleParseError::SelectorError(error.to_string())
     }
 }
 
 impl Bubble {
-    fn parse_html(document: &str) -> Result<Self, BubbleLoadingError> {
+    fn parse_html(document: &str) -> Result<Self, BubbleParseError> {
         let document = Html::parse_document(document);
         let title = Self::parse_title(&document)?;
         Ok(Bubble {
-            topic: Topic {
-                title,
-                descriptions: vec![],
-            },
+            title,
+            topic: Topic::parse_html(&document)?,
             indexables: vec![],
             not_indexables: vec![],
         })
     }
 
     // the title is the first title element in the first head element
-    fn parse_title(html: &Html) -> Result<String, BubbleLoadingError> {
+    fn parse_title(html: &Html) -> Result<String, BubbleParseError> {
         let head_selector = Selector::parse("head")?;
         let title_selector = Selector::parse("title")?;
 
@@ -42,10 +47,10 @@ impl Bubble {
                 if let Some(title_text) = title_text.next() {
                     Ok(title_text.to_string())
                 } else {
-                    Err(BubbleLoadingError::MissingTitle)
+                    Err(BubbleParseError::MissingTitle)
                 }
             } else {
-                Err(BubbleLoadingError::MissingTitle)
+                Err(BubbleParseError::MissingTitle)
             }
         } else {
             unreachable!("Head element should always be present in HTML document");
@@ -68,7 +73,7 @@ mod tests {
             </body>
         </html>"#;
         let bubble = Bubble::parse_html(html).unwrap();
-        assert_eq!(bubble.topic.title, "Test Title");
+        assert_eq!(bubble.title, "Test Title");
     }
 
     #[test]
@@ -81,7 +86,7 @@ mod tests {
             </body>
         </html>"#;
         let err = Bubble::parse_html(html).unwrap_err();
-        assert_eq!(err, BubbleLoadingError::MissingTitle);
+        assert_eq!(err, BubbleParseError::MissingTitle);
     }
 
     #[test]
@@ -95,7 +100,7 @@ mod tests {
             </body>
         </html>"#;
         let err = Bubble::parse_html(html).unwrap_err();
-        assert_eq!(err, BubbleLoadingError::MissingTitle);
+        assert_eq!(err, BubbleParseError::MissingTitle);
     }
 
     #[test]
@@ -106,6 +111,6 @@ mod tests {
             </body>
         </html>"#;
         let err = Bubble::parse_html(html).unwrap_err();
-        assert_eq!(err, BubbleLoadingError::MissingTitle);
+        assert_eq!(err, BubbleParseError::MissingTitle);
     }
 }
