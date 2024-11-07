@@ -1,3 +1,4 @@
+use iri_string::types::IriAbsoluteString;
 use scraper::{error::SelectorErrorKind, Html, Selector};
 use thiserror::Error;
 
@@ -22,19 +23,29 @@ impl<'a> From<SelectorErrorKind<'a>> for TopicParseError {
 impl Topic {
     pub fn parse_html(html: &Html) -> Result<Self, TopicParseError> {
         let description_selector = Selector::parse("a.bubble-wikipedia-topic")?;
-        let descriptions = html
-            .select(&description_selector)
+        let wikipedia_descriptions =
+            Self::make_descriptions(html, description_selector, TopicDescription::Wikipedia)?;
+        Ok(Topic {
+            descriptions: wikipedia_descriptions,
+        })
+    }
+
+    fn make_descriptions(
+        html: &Html,
+        selector: Selector,
+        make_topic_description: impl Fn(IriAbsoluteString) -> TopicDescription,
+    ) -> Result<Vec<TopicDescription>, TopicParseError> {
+        html.select(&selector)
             .map(|description| {
                 let href = description
                     .value()
                     .attr("href")
                     .ok_or_else(|| TopicParseError::MissingHref(description.html()))?;
-                Ok(TopicDescription::Wikipedia(href.try_into().map_err(
-                    |_| TopicParseError::InvalidUrl(description.html()),
-                )?))
+                Ok(make_topic_description(href.try_into().map_err(|_| {
+                    TopicParseError::InvalidUrl(description.html())
+                })?))
             })
-            .collect::<Result<Vec<_>, TopicParseError>>()?;
-        Ok(Topic { descriptions })
+            .collect::<Result<Vec<_>, TopicParseError>>()
     }
 }
 
