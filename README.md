@@ -1,7 +1,6 @@
 # Happy Search Bubbles
 
-NOTE: this is very much a work in progress, and this text below is ideal
-science fiction
+NOTE: this is very much a work in progress, and this text below is describes goals, not the current implementation.
 
 What is Happy Search Bubbles? It's a way to have fulltext search over a section
 of the web and topic you are interested in. For each topic, you select the web
