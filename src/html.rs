@@ -1,15 +1,12 @@
-#[derive(Debug)]
-pub enum BubbleLoadingError<'a> {
-    MissingHead,
-    MultipleHeads,
+#[derive(Debug, PartialEq, Eq)]
+pub enum BubbleLoadingError {
     MissingTitle,
-    MultipleTitles,
-    SelectorError(SelectorErrorKind<'a>),
+    SelectorError(String),
 }
 
-impl<'a> From<SelectorErrorKind<'a>> for BubbleLoadingError<'a> {
+impl<'a> From<SelectorErrorKind<'a>> for BubbleLoadingError {
     fn from(error: SelectorErrorKind<'a>) -> Self {
-        BubbleLoadingError::SelectorError(error)
+        BubbleLoadingError::SelectorError(error.to_string())
     }
 }
 
@@ -31,32 +28,27 @@ impl Bubble {
         })
     }
 
-    fn parse_title<'a>(html: &Html) -> Result<String, BubbleLoadingError<'a>> {
+    // the title is the first title element in the first head element
+    fn parse_title<'a>(html: &Html) -> Result<String, BubbleLoadingError> {
         let head_selector = Selector::parse("head")?;
         let title_selector = Selector::parse("title")?;
 
-        let head = html.select(&head_selector);
-        let heads = head.collect::<Vec<_>>();
-        match heads.len() {
-            1 => {
-                let head = heads[0];
-                let title = head.select(&title_selector);
-                let titles = title.collect::<Vec<_>>();
-                match titles.len() {
-                    1 => {
-                        let title = titles[0];
-                        let title_text = title.text().collect::<Vec<_>>();
-                        match title_text.len() {
-                            1 => Ok(title_text[0].to_string()),
-                            _ => Err(BubbleLoadingError::MultipleTitles),
-                        }
-                    }
-                    0 => Err(BubbleLoadingError::MissingTitle),
-                    _ => Err(BubbleLoadingError::MultipleTitles),
+        let mut head = html.select(&head_selector);
+
+        if let Some(head) = head.next() {
+            let mut title = head.select(&title_selector);
+            if let Some(title) = title.next() {
+                let mut title_text = title.text();
+                if let Some(title_text) = title_text.next() {
+                    Ok(title_text.to_string())
+                } else {
+                    Err(BubbleLoadingError::MissingTitle)
                 }
+            } else {
+                Err(BubbleLoadingError::MissingTitle)
             }
-            0 => Err(BubbleLoadingError::MissingHead),
-            _ => Err(BubbleLoadingError::MultipleHeads),
+        } else {
+            unreachable!("Head element should always be present in HTML document");
         }
     }
 }
@@ -73,8 +65,47 @@ mod tests {
             </head>
             <body>
                 <h1>Test Body</h1>
-            </body>"#;
+            </body>
+        </html>"#;
         let bubble = Bubble::parse_html(html).unwrap();
         assert_eq!(bubble.topic.title, "Test Title");
+    }
+
+    #[test]
+    fn test_title_missing() {
+        let html = r#"<html>
+            <head>
+            </head>
+            <body>
+                <h1>Test Body</h1>
+            </body>
+        </html>"#;
+        let err = Bubble::parse_html(html).unwrap_err();
+        assert_eq!(err, BubbleLoadingError::MissingTitle);
+    }
+
+    #[test]
+    fn test_title_text_missing() {
+        let html = r#"<html>
+            <head>
+              <title></title>
+            </head>
+            <body>
+                <h1>Test Body</h1>
+            </body>
+        </html>"#;
+        let err = Bubble::parse_html(html).unwrap_err();
+        assert_eq!(err, BubbleLoadingError::MissingTitle);
+    }
+
+    #[test]
+    fn test_head_missing() {
+        let html = r#"<html>
+            <body>
+                <h1>Test Body</h1>
+            </body>
+        </html>"#;
+        let err = Bubble::parse_html(html).unwrap_err();
+        assert_eq!(err, BubbleLoadingError::MissingTitle);
     }
 }
