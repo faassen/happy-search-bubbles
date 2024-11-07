@@ -6,5 +6,5 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.93"
 iri-string = "0.7.7"
-scraper = "0.21.0"
+scraper = { version = "0.21.0", features = ["deterministic"] }
 thiserror = "2.0.0"

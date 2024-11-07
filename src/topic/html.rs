@@ -6,9 +6,9 @@ use super::{Topic, TopicDescription};
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum TopicParseError {
     #[error("Topic description without href")]
-    MissingHref,
+    MissingHref(String),
     #[error("Invalid URL")]
-    InvalidUrl,
+    InvalidUrl(String),
     #[error("Selector error: {0}")]
     SelectorError(String),
 }
@@ -28,10 +28,10 @@ impl Topic {
                 let href = description
                     .value()
                     .attr("href")
-                    .ok_or(TopicParseError::MissingHref)?;
-                Ok(TopicDescription::Wikipedia(
-                    href.try_into().map_err(|_| TopicParseError::InvalidUrl)?,
-                ))
+                    .ok_or_else(|| TopicParseError::MissingHref(description.html()))?;
+                Ok(TopicDescription::Wikipedia(href.try_into().map_err(
+                    |_| TopicParseError::InvalidUrl(description.html()),
+                )?))
             })
             .collect::<Result<Vec<_>, TopicParseError>>()?;
         Ok(Topic { descriptions })
@@ -79,7 +79,12 @@ mod tests {
         </html>"#;
         let document = Html::parse_document(html);
         let err = Topic::parse_html(&document).unwrap_err();
-        assert_eq!(err, TopicParseError::MissingHref);
+        assert_eq!(
+            err,
+            TopicParseError::MissingHref(
+                r#"<a class="bubble-wikipedia-topic">HTML</a>"#.to_string()
+            )
+        );
     }
 
     #[test]
@@ -96,6 +101,11 @@ mod tests {
         </html>"#;
         let document = Html::parse_document(html);
         let err = Topic::parse_html(&document).unwrap_err();
-        assert_eq!(err, TopicParseError::InvalidUrl);
+        assert_eq!(
+            err,
+            TopicParseError::InvalidUrl(
+                r#"<a class="bubble-wikipedia-topic" href="very-broken">HTML</a>"#.to_string()
+            )
+        );
     }
 }
