@@ -1,11 +1,14 @@
 # Happy Search Bubbles
 
+NOTE: this is very much a work in progress, and this text below is ideal
+science fiction
+
 What is Happy Search Bubbles? It's a way to have fulltext search over a section
 of the web and topic you are interested in. For each topic, you select the web
 sites you want to search yourself: you create a bubble. Once you have a bubble,
 you can search it, browse through it, and other things.
 
-Creating your own bubbles sounds lonely and a shore, but these are happy
+Creating your own bubbles sounds lonely and a chore, but these are happy
 bubbles. You can share your bubbles with others. You can also expand other
 people's bubbles.
 
