@@ -12,7 +12,7 @@ Creating your own bubbles sounds lonely and a chore, but these are happy
 bubbles. You can share your bubbles with others. You can also expand other
 people's bubbles.
 
-We curate our own search bubbles, not search engine providers.
+People curate their own search bubbles.
 
 ## How to create a bubble
 
