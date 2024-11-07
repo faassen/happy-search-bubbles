@@ -1,0 +1,7 @@
+[package]
+name = "happy-search-bubbles"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+iri-string = "0.7.7"
