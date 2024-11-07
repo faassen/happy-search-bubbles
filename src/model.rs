@@ -12,8 +12,8 @@ pub enum Scope {
 }
 
 pub struct Topic {
-    title: String,
-    descriptions: Vec<TopicDescription>,
+    pub title: String,
+    pub descriptions: Vec<TopicDescription>,
 }
 
 pub enum TopicDescription {
@@ -22,7 +22,7 @@ pub enum TopicDescription {
 }
 
 pub struct Bubble {
-    topic: Topic,
-    indexables: Vec<Indexable>,
-    not_indexables: Vec<Indexable>,
+    pub topic: Topic,
+    pub indexables: Vec<Indexable>,
+    pub not_indexables: Vec<Indexable>,
 }
