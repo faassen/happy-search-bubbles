@@ -29,7 +29,7 @@ impl Bubble {
     }
 
     // the title is the first title element in the first head element
-    fn parse_title<'a>(html: &Html) -> Result<String, BubbleLoadingError> {
+    fn parse_title(html: &Html) -> Result<String, BubbleLoadingError> {
         let head_selector = Selector::parse("head")?;
         let title_selector = Selector::parse("title")?;
 
