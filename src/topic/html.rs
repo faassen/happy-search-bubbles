@@ -5,9 +5,9 @@ use super::{Topic, TopicDescription};
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum TopicParseError {
-    #[error("Topic description without href")]
+    #[error("Topic description without href: {0}")]
     MissingHref(String),
-    #[error("Invalid URL")]
+    #[error("Invalid URL in topic description: {0}")]
     InvalidUrl(String),
     #[error("Selector error: {0}")]
     SelectorError(String),

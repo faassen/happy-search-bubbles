@@ -9,7 +9,7 @@ use super::model::Bubble;
 pub enum BubbleParseError {
     #[error("Missing title element in HTML document")]
     MissingTitle,
-    #[error("Could not parse topic")]
+    #[error("Could not parse topic: {0}")]
     TopicError(#[from] TopicParseError),
     #[error("Selector error: {0}")]
     SelectorError(String),
