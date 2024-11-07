@@ -27,7 +27,7 @@ pub enum TopicDescription {
 
 #[derive(Debug)]
 pub struct Bubble {
-    pub topic: Topic,
-    pub indexables: Vec<Indexable>,
-    pub not_indexables: Vec<Indexable>,
+    pub(super) topic: Topic,
+    pub(super) indexables: Vec<Indexable>,
+    pub(super) not_indexables: Vec<Indexable>,
 }

@@ -1,3 +1,7 @@
+use super::model::{Bubble, Topic};
+
+use scraper::{error::SelectorErrorKind, Html, Selector};
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum BubbleLoadingError {
     MissingTitle,
@@ -9,10 +13,6 @@ impl<'a> From<SelectorErrorKind<'a>> for BubbleLoadingError {
         BubbleLoadingError::SelectorError(error.to_string())
     }
 }
-
-use crate::model::{Bubble, Topic};
-
-use scraper::{error::SelectorErrorKind, Html, Selector};
 
 impl Bubble {
     fn parse_html(document: &str) -> Result<Self, BubbleLoadingError> {

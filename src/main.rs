@@ -1,5 +1,4 @@
-mod html;
-mod model;
+mod bubble;
 
 fn main() {
     println!("Hello, world!");
