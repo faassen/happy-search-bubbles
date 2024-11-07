@@ -22,12 +22,23 @@ impl<'a> From<SelectorErrorKind<'a>> for TopicParseError {
 
 impl Topic {
     pub fn parse_html(html: &Html) -> Result<Self, TopicParseError> {
-        let description_selector = Selector::parse("a.bubble-wikipedia-topic")?;
-        let wikipedia_descriptions =
-            Self::make_descriptions(html, description_selector, TopicDescription::Wikipedia)?;
-        Ok(Topic {
-            descriptions: wikipedia_descriptions,
-        })
+        let wikipedia_description_selector = Selector::parse("a.bubble-wikipedia-topic")?;
+        let wikipedia_descriptions = Self::make_descriptions(
+            html,
+            wikipedia_description_selector,
+            TopicDescription::Wikipedia,
+        )?;
+        let wikidata_description_selector = Selector::parse("a.bubble-wikidata-topic")?;
+        let wikidata_descriptions = Self::make_descriptions(
+            html,
+            wikidata_description_selector,
+            TopicDescription::Wikidata,
+        )?;
+        let descriptions = wikipedia_descriptions
+            .into_iter()
+            .chain(wikidata_descriptions)
+            .collect();
+        Ok(Topic { descriptions })
     }
 
     fn make_descriptions(
@@ -73,6 +84,56 @@ mod tests {
         assert_eq!(
             topic.descriptions[0],
             TopicDescription::Wikipedia("https://en.wikipedia.org/wiki/HTML".try_into().unwrap())
+        );
+    }
+
+    #[test]
+    fn test_parse_wikidata_topic_description() {
+        let html = r#"<html>
+            <head>
+                <title>Test</title>
+            </head>
+            <body>
+                <div>
+                    <a class="bubble-wikidata-topic" href="https://www.wikidata.org/wiki/Q8811">HTML</a>
+                </div>
+            </body>
+        </html>"#;
+        let document = Html::parse_document(html);
+        let topic = Topic::parse_html(&document).unwrap();
+        assert_eq!(topic.descriptions.len(), 1);
+        assert_eq!(
+            topic.descriptions[0],
+            TopicDescription::Wikidata("https://www.wikidata.org/wiki/Q8811".try_into().unwrap())
+        );
+    }
+
+    #[test]
+    fn test_parse_combined_topic_description() {
+        let html = r#"<html>
+            <head>
+                <title>Test</title>
+            </head>
+            <body>
+                <div>
+                    <a class="bubble-wikipedia-topic" href="https://en.wikipedia.org/wiki/HTML">HTML</a>
+                    <a class="bubble-wikidata-topic" href="https://www.wikidata.org/wiki/Q8811">HTML</a>
+                </div>
+            </body>
+        </html>"#;
+        let document = Html::parse_document(html);
+        let topic = Topic::parse_html(&document).unwrap();
+
+        assert_eq!(
+            topic.descriptions,
+            vec![
+                TopicDescription::Wikipedia(
+                    "https://en.wikipedia.org/wiki/HTML".try_into().unwrap()
+                ),
+                TopicDescription::Wikidata(
+                    "https://www.wikidata.org/wiki/Q8811".try_into().unwrap()
+                )
+            ]
         );
     }
 

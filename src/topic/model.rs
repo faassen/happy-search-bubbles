@@ -8,5 +8,5 @@ pub struct Topic {
 #[derive(Debug, PartialEq, Eq)]
 pub enum TopicDescription {
     Wikipedia(IriAbsoluteString),
-    WikiData(IriAbsoluteString),
+    Wikidata(IriAbsoluteString),
 }
