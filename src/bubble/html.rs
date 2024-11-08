@@ -27,7 +27,7 @@ impl<'a> From<SelectorErrorKind<'a>> for BubbleParseError {
 }
 
 impl Bubble {
-    fn parse_html(document: &str) -> Result<Self, BubbleParseError> {
+    pub fn parse_html(document: &str) -> Result<Self, BubbleParseError> {
         let document = Html::parse_document(document);
         let title = Self::parse_title(&document)?;
         let indexables = Indexable::parse_indexables(&document)?;

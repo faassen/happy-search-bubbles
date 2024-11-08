@@ -11,7 +11,10 @@ Creating your own bubbles sounds lonely and a chore, but these are happy
 bubbles. You can share your bubbles with others. You can also expand other
 people's bubbles.
 
-People curate their own search bubbles.
+This puts people in charge of creating and curating search bubbles. With active
+curation, SEO, advertising and slop can be excluded from the search experience.
+It's not the same as a full web search, but your search experience within a
+bubble should be more human and happier.
 
 ## How to create a bubble
 
@@ -19,27 +22,11 @@ We provide software for you to manage your bubbles and publish them. But in
 reality, happy search bubbles are just HTML web pages full of links, following
 a few simple rules. You can publish them in any way you publish HTML.
 
-The rules:
-
-The page has a special topic link to a wikipedia page that describes the topic.
-
-The page can have links to other bubble pages it expands upon.
-
-A section further contains a bunch of links. Links have classes, meaning "whole
-site", "just this page" or "everything linked under this path", and also
-"exclude" to explicitly exclude stuff possibly previously included (to exclude
-something provided by this or a linked bubble).
-
-Can have a reference included to a pre-baked index.
-
 ## How to search a bubble?
 
 You need to have a search engine! Oh no, how do I install a search engine?
 Don't worry, we provide one. You can provide it with bubble pages and it will
 index them and let you search them. 
-
-To help others search without having to index separately, you can publish your
-index too!
 
 You can also provide rules for when to reindex (reindex always upon change of
 bubble, reindex content incrementally).
