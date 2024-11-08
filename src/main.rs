@@ -1,4 +1,5 @@
 mod bubble;
+mod indexable;
 mod topic;
 
 fn main() {
