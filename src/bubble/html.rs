@@ -6,12 +6,16 @@ use crate::{
     topic::{Topic, TopicParseError},
 };
 
-use super::model::Bubble;
+use super::model::{Bubble, BubbleReference};
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum BubbleParseError {
     #[error("Missing title element in HTML document")]
     MissingTitle,
+    #[error("Missing href in expands: {0}")]
+    MissingHref(String),
+    #[error("Invalid URL in expands: {0}")]
+    InvalidUrl(String),
     #[error("Could not parse topic: {0}")]
     TopicError(#[from] TopicParseError),
     #[error("Could not parse indexables: {0}")]
@@ -32,9 +36,12 @@ impl Bubble {
         let title = Self::parse_title(&document)?;
         let indexables = Indexable::parse_indexables(&document)?;
         let excludes = Indexable::parse_excludes(&document)?;
+        let expands = Self::make_expands(&document)?;
+
         Ok(Bubble {
             title,
             topic: Topic::parse_html(&document)?,
+            expands,
             indexables,
             excludes,
         })
@@ -62,6 +69,24 @@ impl Bubble {
         } else {
             unreachable!("Head element should always be present in HTML document");
         }
+    }
+
+    fn make_expands(html: &Html) -> Result<Vec<BubbleReference>, BubbleParseError> {
+        let selector = Selector::parse("a.bubble-expand")?;
+        html.select(&selector)
+            .map(|expands| {
+                let href = expands
+                    .value()
+                    .attr("href")
+                    .ok_or_else(|| BubbleParseError::MissingHref(expands.html()))?;
+                Ok(BubbleReference {
+                    uri: href
+                        .try_into()
+                        .map_err(|_| BubbleParseError::InvalidUrl(expands.html()))?,
+                    label: expands.text().collect(),
+                })
+            })
+            .collect::<Result<Vec<_>, BubbleParseError>>()
     }
 }
 
@@ -131,6 +156,7 @@ mod tests {
             </head>
             <body>
                 <a class="bubble-wikidata-topic" href="https://www.wikidata.org/wiki/Q8811">HTML</a>
+                <a class="bubble-expand" href="https://another.org/my-bubble">Another bubble!</a>
                 <a class="bubble-search-page" href="https://example.com/a">Example</a>
                 <a class="bubble-search-site" href="https://example.com">Example</a>
                 <a class="bubble-search-path" href="https://example.com/b">Example</a>
@@ -146,6 +172,13 @@ mod tests {
             vec![TopicDescription::Wikidata(
                 "https://www.wikidata.org/wiki/Q8811".try_into().unwrap()
             )]
+        );
+        assert_eq!(
+            bubble.expands,
+            vec![BubbleReference {
+                uri: "https://another.org/my-bubble".parse().unwrap(),
+                label: "Another bubble!".to_string(),
+            }]
         );
         assert_eq!(
             bubble.indexables,
