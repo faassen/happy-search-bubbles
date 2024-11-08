@@ -15,3 +15,9 @@ pub enum Scope {
           // probably requires some kind of trait where site-specific knowledge can
           // be described
 }
+
+impl Indexable {
+    pub fn new(uri: IriAbsoluteString, scope: Scope) -> Self {
+        Self { uri, scope }
+    }
+}

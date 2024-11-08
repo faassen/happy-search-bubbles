@@ -10,3 +10,9 @@ pub enum TopicDescription {
     Wikipedia(IriAbsoluteString),
     Wikidata(IriAbsoluteString),
 }
+
+impl Topic {
+    pub fn descriptions(&self) -> &[TopicDescription] {
+        &self.descriptions
+    }
+}

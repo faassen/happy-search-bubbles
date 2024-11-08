@@ -21,7 +21,7 @@ impl<'a> From<SelectorErrorKind<'a>> for TopicParseError {
 }
 
 impl Topic {
-    pub fn parse_html(html: &Html) -> Result<Self, TopicParseError> {
+    pub(crate) fn parse_html(html: &Html) -> Result<Self, TopicParseError> {
         let wikipedia_description_selector = Selector::parse("a.bubble-wikipedia-topic")?;
         let wikipedia_descriptions = Self::make_descriptions(
             html,

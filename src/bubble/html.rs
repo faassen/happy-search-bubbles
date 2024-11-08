@@ -1,7 +1,10 @@
 use scraper::{error::SelectorErrorKind, Html, Selector};
 use thiserror::Error;
 
-use crate::topic::{Topic, TopicParseError};
+use crate::{
+    indexable::{Indexable, IndexableParseError},
+    topic::{Topic, TopicParseError},
+};
 
 use super::model::Bubble;
 
@@ -11,6 +14,8 @@ pub enum BubbleParseError {
     MissingTitle,
     #[error("Could not parse topic: {0}")]
     TopicError(#[from] TopicParseError),
+    #[error("Could not parse indexables: {0}")]
+    IndexableError(#[from] IndexableParseError),
     #[error("Selector error: {0}")]
     SelectorError(String),
 }
@@ -25,11 +30,13 @@ impl Bubble {
     fn parse_html(document: &str) -> Result<Self, BubbleParseError> {
         let document = Html::parse_document(document);
         let title = Self::parse_title(&document)?;
+        let indexables = Indexable::parse_indexables(&document)?;
+        let excludes = Indexable::parse_excludes(&document)?;
         Ok(Bubble {
             title,
             topic: Topic::parse_html(&document)?,
-            indexables: vec![],
-            not_indexables: vec![],
+            indexables,
+            excludes,
         })
     }
 
@@ -60,6 +67,8 @@ impl Bubble {
 
 #[cfg(test)]
 mod tests {
+    use crate::{indexable::Scope, topic::TopicDescription};
+
     use super::*;
 
     #[test]
@@ -112,5 +121,47 @@ mod tests {
         </html>"#;
         let err = Bubble::parse_html(html).unwrap_err();
         assert_eq!(err, BubbleParseError::MissingTitle);
+    }
+
+    #[test]
+    fn test_full() {
+        let html = r#"<html>
+            <head>
+                <title>Test Title</title>
+            </head>
+            <body>
+                <a class="bubble-wikidata-topic" href="https://www.wikidata.org/wiki/Q8811">HTML</a>
+                <a class="bubble-search-page" href="https://example.com/a">Example</a>
+                <a class="bubble-search-site" href="https://example.com">Example</a>
+                <a class="bubble-search-path" href="https://example.com/b">Example</a>
+                <a class="bubble-exclude-page" href="https://example.com/d">Example</a>
+                <a class="bubble-exclude-site" href="https://another.com">Example</a>
+                <a class="bubble-exclude-path" href="https://example.com/c">Example</a> 
+            </body>
+        </html>"#;
+        let bubble = Bubble::parse_html(html).unwrap();
+        assert_eq!(bubble.title, "Test Title");
+        assert_eq!(
+            bubble.topic.descriptions(),
+            vec![TopicDescription::Wikidata(
+                "https://www.wikidata.org/wiki/Q8811".try_into().unwrap()
+            )]
+        );
+        assert_eq!(
+            bubble.indexables,
+            vec![
+                Indexable::new("https://example.com/a".parse().unwrap(), Scope::Page),
+                Indexable::new("https://example.com".parse().unwrap(), Scope::Site),
+                Indexable::new("https://example.com/b".parse().unwrap(), Scope::Path),
+            ]
+        );
+        assert_eq!(
+            bubble.excludes,
+            vec![
+                Indexable::new("https://example.com/d".parse().unwrap(), Scope::Page),
+                Indexable::new("https://another.com".parse().unwrap(), Scope::Site),
+                Indexable::new("https://example.com/c".parse().unwrap(), Scope::Path),
+            ]
+        );
     }
 }

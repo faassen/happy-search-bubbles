@@ -1,4 +1,3 @@
-use iri_string::types::IriAbsoluteString;
 use scraper::{error::SelectorErrorKind, Html, Selector};
 use thiserror::Error;
 
@@ -21,7 +20,7 @@ impl<'a> From<SelectorErrorKind<'a>> for IndexableParseError {
 }
 
 impl Indexable {
-    pub fn parse_indexables(html: &Html) -> Result<Vec<Self>, IndexableParseError> {
+    pub(crate) fn parse_indexables(html: &Html) -> Result<Vec<Self>, IndexableParseError> {
         let pages =
             Self::make_indexables(html, Selector::parse("a.bubble-search-page")?, Scope::Page)?;
         let sites =
@@ -32,7 +31,7 @@ impl Indexable {
         Ok(pages)
     }
 
-    pub fn parse_excludes(html: &Html) -> Result<Vec<Self>, IndexableParseError> {
+    pub(crate) fn parse_excludes(html: &Html) -> Result<Vec<Self>, IndexableParseError> {
         let pages =
             Self::make_indexables(html, Selector::parse("a.bubble-exclude-page")?, Scope::Page)?;
         let sites =
