@@ -22,8 +22,13 @@ impl<'a> From<SelectorErrorKind<'a>> for IndexableParseError {
 
 impl Indexable {
     pub fn parse_html(html: &Html) -> Result<Vec<Self>, IndexableParseError> {
-        let page_selector = Selector::parse("a.bubble-search-page")?;
-        let pages = Self::make_indexables(html, page_selector, Scope::Page)?;
+        let pages =
+            Self::make_indexables(html, Selector::parse("a.bubble-search-page")?, Scope::Page)?;
+        let sites =
+            Self::make_indexables(html, Selector::parse("a.bubble-search-site")?, Scope::Site)?;
+        let paths =
+            Self::make_indexables(html, Selector::parse("a.bubble-search-path")?, Scope::Path)?;
+        let pages = pages.into_iter().chain(sites).chain(paths).collect();
         Ok(pages)
     }
 
@@ -70,6 +75,38 @@ mod tests {
                 uri: "https://example.com".parse().unwrap(),
                 scope: Scope::Page,
             }])
+        );
+    }
+
+    #[test]
+    fn test_parse_indexable_mixture() {
+        let html = r#"
+        <html>
+            <body>
+                <a class="bubble-search-page" href="https://example.com/a">Example</a>
+                <a class="bubble-search-site" href="https://example.com">Example</a>
+                <a class="bubble-search-path" href="https://example.com/b">Example</a>
+            </body>
+        </html>
+        "#;
+        let document = Html::parse_document(html);
+        let indexables = Indexable::parse_html(&document);
+        assert_eq!(
+            indexables,
+            Ok(vec![
+                Indexable {
+                    uri: "https://example.com/a".parse().unwrap(),
+                    scope: Scope::Page,
+                },
+                Indexable {
+                    uri: "https://example.com".parse().unwrap(),
+                    scope: Scope::Site,
+                },
+                Indexable {
+                    uri: "https://example.com/b".parse().unwrap(),
+                    scope: Scope::Path,
+                }
+            ])
         );
     }
 }
