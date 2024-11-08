@@ -160,12 +160,12 @@ mod tests {
             <body>
                 <a class="bubble-wikidata-topic" href="https://www.wikidata.org/wiki/Q8811">HTML</a>
                 <a class="bubble-expand" href="https://another.org/my-bubble">Another bubble!</a>
-                <a class="bubble-search-page" href="https://example.com/a">Example</a>
-                <a class="bubble-search-site" href="https://example.com">Example</a>
-                <a class="bubble-search-path" href="https://example.com/b">Example</a>
-                <a class="bubble-exclude-page" href="https://example.com/d">Example</a>
-                <a class="bubble-exclude-site" href="https://another.com">Example</a>
-                <a class="bubble-exclude-path" href="https://example.com/c">Example</a> 
+                <a class="bubble-search-page" href="https://example.com/a">Search page</a>
+                <a class="bubble-search-site" href="https://example.com">Search site</a>
+                <a class="bubble-search-path" href="https://example.com/b">Search path</a>
+                <a class="bubble-exclude-page" href="https://example.com/d">Search page</a>
+                <a class="bubble-exclude-site" href="https://another.com">Search site</a>
+                <a class="bubble-exclude-path" href="https://example.com/c">Search path</a> 
             </body>
         </html>"#;
         let bubble = Bubble::parse_html(html).unwrap();
@@ -188,17 +188,41 @@ mod tests {
         assert_eq!(
             bubble.indexables,
             vec![
-                Indexable::new("https://example.com/a".parse().unwrap(), Scope::Page),
-                Indexable::new("https://example.com".parse().unwrap(), Scope::Site),
-                Indexable::new("https://example.com/b".parse().unwrap(), Scope::Path),
+                Indexable::new(
+                    "https://example.com/a".parse().unwrap(),
+                    Scope::Page,
+                    "Search page".to_string()
+                ),
+                Indexable::new(
+                    "https://example.com".parse().unwrap(),
+                    Scope::Site,
+                    "Search site".to_string()
+                ),
+                Indexable::new(
+                    "https://example.com/b".parse().unwrap(),
+                    Scope::Path,
+                    "Search path".to_string()
+                ),
             ]
         );
         assert_eq!(
             bubble.excludes,
             vec![
-                Indexable::new("https://example.com/d".parse().unwrap(), Scope::Page),
-                Indexable::new("https://another.com".parse().unwrap(), Scope::Site),
-                Indexable::new("https://example.com/c".parse().unwrap(), Scope::Path),
+                Indexable::new(
+                    "https://example.com/d".parse().unwrap(),
+                    Scope::Page,
+                    "Search page".to_string()
+                ),
+                Indexable::new(
+                    "https://another.com".parse().unwrap(),
+                    Scope::Site,
+                    "Search site".to_string()
+                ),
+                Indexable::new(
+                    "https://example.com/c".parse().unwrap(),
+                    Scope::Path,
+                    "Search path".to_string()
+                ),
             ]
         );
     }

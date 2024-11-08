@@ -4,6 +4,7 @@ use iri_string::types::IriAbsoluteString;
 pub struct Indexable {
     pub(super) uri: IriAbsoluteString,
     pub(super) scope: Scope,
+    pub(super) label: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -17,7 +18,7 @@ pub enum Scope {
 }
 
 impl Indexable {
-    pub fn new(uri: IriAbsoluteString, scope: Scope) -> Self {
-        Self { uri, scope }
+    pub fn new(uri: IriAbsoluteString, scope: Scope, label: String) -> Self {
+        Self { uri, scope, label }
     }
 }

@@ -1,4 +1,3 @@
-use iri_string::types::IriAbsoluteString;
 use scraper::{error::SelectorErrorKind, Html, Selector};
 use thiserror::Error;
 

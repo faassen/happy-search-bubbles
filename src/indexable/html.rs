@@ -58,6 +58,7 @@ impl Indexable {
                         .try_into()
                         .map_err(|_| IndexableParseError::InvalidUrl(indexable.html()))?,
                     scope: scope.clone(),
+                    label: indexable.text().collect(),
                 })
             })
             .collect::<Result<Vec<_>, IndexableParseError>>()
@@ -84,6 +85,7 @@ mod tests {
             Ok(vec![Indexable {
                 uri: "https://example.com".parse().unwrap(),
                 scope: Scope::Page,
+                label: "Example".to_string(),
             }])
         );
     }
@@ -93,9 +95,9 @@ mod tests {
         let html = r#"
         <html>
             <body>
-                <a class="bubble-search-page" href="https://example.com/a">Example</a>
-                <a class="bubble-search-site" href="https://example.com">Example</a>
-                <a class="bubble-search-path" href="https://example.com/b">Example</a>
+                <a class="bubble-search-page" href="https://example.com/a">Page</a>
+                <a class="bubble-search-site" href="https://example.com">Site</a>
+                <a class="bubble-search-path" href="https://example.com/b">Path</a>
             </body>
         </html>
         "#;
@@ -107,14 +109,17 @@ mod tests {
                 Indexable {
                     uri: "https://example.com/a".parse().unwrap(),
                     scope: Scope::Page,
+                    label: "Page".to_string(),
                 },
                 Indexable {
                     uri: "https://example.com".parse().unwrap(),
                     scope: Scope::Site,
+                    label: "Site".to_string(),
                 },
                 Indexable {
                     uri: "https://example.com/b".parse().unwrap(),
                     scope: Scope::Path,
+                    label: "Path".to_string(),
                 }
             ])
         );
@@ -125,9 +130,9 @@ mod tests {
         let html = r#"
         <html>
             <body>
-                <a class="bubble-exclude-page" href="https://example.com/a">Example</a>
-                <a class="bubble-exclude-site" href="https://example.com">Example</a>
-                <a class="bubble-exclude-path" href="https://example.com/b">Example</a>
+                <a class="bubble-exclude-page" href="https://example.com/a">Page</a>
+                <a class="bubble-exclude-site" href="https://example.com">Site</a>
+                <a class="bubble-exclude-path" href="https://example.com/b">Path</a>
             </body>
         </html>
         "#;
@@ -139,14 +144,17 @@ mod tests {
                 Indexable {
                     uri: "https://example.com/a".parse().unwrap(),
                     scope: Scope::Page,
+                    label: "Page".to_string(),
                 },
                 Indexable {
                     uri: "https://example.com".parse().unwrap(),
                     scope: Scope::Site,
+                    label: "Site".to_string(),
                 },
                 Indexable {
                     uri: "https://example.com/b".parse().unwrap(),
                     scope: Scope::Path,
+                    label: "Path".to_string(),
                 }
             ])
         );
