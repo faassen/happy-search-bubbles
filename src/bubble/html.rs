@@ -92,7 +92,10 @@ impl Bubble {
 
 #[cfg(test)]
 mod tests {
-    use crate::{indexable::Scope, topic::TopicDescription};
+    use crate::{
+        indexable::Scope,
+        topic::{TopicCategory, TopicReference},
+    };
 
     use super::*;
 
@@ -168,9 +171,11 @@ mod tests {
         let bubble = Bubble::parse_html(html).unwrap();
         assert_eq!(bubble.title, "Test Title");
         assert_eq!(
-            bubble.topic.descriptions(),
-            vec![TopicDescription::Wikidata(
-                "https://www.wikidata.org/wiki/Q8811".try_into().unwrap()
+            bubble.topic.references(),
+            vec![TopicReference::new(
+                "https://www.wikidata.org/wiki/Q8811".try_into().unwrap(),
+                "HTML".to_string(),
+                TopicCategory::Wikidata
             )]
         );
         assert_eq!(

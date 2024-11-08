@@ -2,4 +2,4 @@ mod html;
 mod model;
 
 pub use html::TopicParseError;
-pub use model::{Topic, TopicDescription};
+pub use model::{Topic, TopicCategory, TopicReference};

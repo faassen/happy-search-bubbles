@@ -2,7 +2,7 @@ use iri_string::types::IriAbsoluteString;
 use scraper::{error::SelectorErrorKind, Html, Selector};
 use thiserror::Error;
 
-use super::{Topic, TopicDescription};
+use super::{Topic, TopicCategory, TopicReference};
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum TopicParseError {
@@ -22,39 +22,42 @@ impl<'a> From<SelectorErrorKind<'a>> for TopicParseError {
 
 impl Topic {
     pub(crate) fn parse_html(html: &Html) -> Result<Self, TopicParseError> {
-        let wikipedia_description_selector = Selector::parse("a.bubble-wikipedia-topic")?;
-        let wikipedia_descriptions = Self::make_descriptions(
+        let wikipedia_references = Self::make_references(
             html,
-            wikipedia_description_selector,
-            TopicDescription::Wikipedia,
+            Selector::parse("a.bubble-wikipedia-topic")?,
+            TopicCategory::Wikipedia,
         )?;
-        let wikidata_description_selector = Selector::parse("a.bubble-wikidata-topic")?;
-        let wikidata_descriptions = Self::make_descriptions(
+
+        let wikidata_references = Self::make_references(
             html,
-            wikidata_description_selector,
-            TopicDescription::Wikidata,
+            Selector::parse("a.bubble-wikidata-topic")?,
+            TopicCategory::Wikidata,
         )?;
-        let descriptions = wikipedia_descriptions
+        let references = wikipedia_references
             .into_iter()
-            .chain(wikidata_descriptions)
+            .chain(wikidata_references)
             .collect();
-        Ok(Topic { descriptions })
+        Ok(Topic { references })
     }
 
-    fn make_descriptions(
+    fn make_references(
         html: &Html,
         selector: Selector,
-        make_topic_description: impl Fn(IriAbsoluteString) -> TopicDescription,
-    ) -> Result<Vec<TopicDescription>, TopicParseError> {
+        category: TopicCategory,
+    ) -> Result<Vec<TopicReference>, TopicParseError> {
         html.select(&selector)
             .map(|description| {
                 let href = description
                     .value()
                     .attr("href")
                     .ok_or_else(|| TopicParseError::MissingHref(description.html()))?;
-                Ok(make_topic_description(href.try_into().map_err(|_| {
-                    TopicParseError::InvalidUrl(description.html())
-                })?))
+                Ok(TopicReference {
+                    uri: href
+                        .try_into()
+                        .map_err(|_| TopicParseError::InvalidUrl(description.html()))?,
+                    category: category.clone(),
+                    label: description.text().collect(),
+                })
             })
             .collect::<Result<Vec<_>, TopicParseError>>()
     }
@@ -62,7 +65,6 @@ impl Topic {
 
 #[cfg(test)]
 mod tests {
-    use crate::topic::model::TopicDescription;
 
     use super::*;
 
@@ -80,10 +82,14 @@ mod tests {
         </html>"#;
         let document = Html::parse_document(html);
         let topic = Topic::parse_html(&document).unwrap();
-        assert_eq!(topic.descriptions.len(), 1);
+        assert_eq!(topic.references.len(), 1);
         assert_eq!(
-            topic.descriptions[0],
-            TopicDescription::Wikipedia("https://en.wikipedia.org/wiki/HTML".try_into().unwrap())
+            topic.references[0],
+            TopicReference {
+                uri: "https://en.wikipedia.org/wiki/HTML".try_into().unwrap(),
+                label: "HTML".to_string(),
+                category: TopicCategory::Wikipedia,
+            }
         );
     }
 
@@ -101,10 +107,14 @@ mod tests {
         </html>"#;
         let document = Html::parse_document(html);
         let topic = Topic::parse_html(&document).unwrap();
-        assert_eq!(topic.descriptions.len(), 1);
+        assert_eq!(topic.references.len(), 1);
         assert_eq!(
-            topic.descriptions[0],
-            TopicDescription::Wikidata("https://www.wikidata.org/wiki/Q8811".try_into().unwrap())
+            topic.references[0],
+            TopicReference {
+                uri: "https://www.wikidata.org/wiki/Q8811".try_into().unwrap(),
+                label: "HTML".to_string(),
+                category: TopicCategory::Wikidata,
+            }
         );
     }
 
@@ -125,14 +135,18 @@ mod tests {
         let topic = Topic::parse_html(&document).unwrap();
 
         assert_eq!(
-            topic.descriptions,
+            topic.references,
             vec![
-                TopicDescription::Wikipedia(
-                    "https://en.wikipedia.org/wiki/HTML".try_into().unwrap()
-                ),
-                TopicDescription::Wikidata(
-                    "https://www.wikidata.org/wiki/Q8811".try_into().unwrap()
-                )
+                TopicReference {
+                    uri: "https://en.wikipedia.org/wiki/HTML".try_into().unwrap(),
+                    label: "HTML".to_string(),
+                    category: TopicCategory::Wikipedia,
+                },
+                TopicReference {
+                    uri: "https://www.wikidata.org/wiki/Q8811".try_into().unwrap(),
+                    label: "HTML".to_string(),
+                    category: TopicCategory::Wikidata,
+                }
             ]
         );
     }
