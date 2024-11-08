@@ -21,13 +21,24 @@ impl<'a> From<SelectorErrorKind<'a>> for IndexableParseError {
 }
 
 impl Indexable {
-    pub fn parse_html(html: &Html) -> Result<Vec<Self>, IndexableParseError> {
+    pub fn parse_indexables(html: &Html) -> Result<Vec<Self>, IndexableParseError> {
         let pages =
             Self::make_indexables(html, Selector::parse("a.bubble-search-page")?, Scope::Page)?;
         let sites =
             Self::make_indexables(html, Selector::parse("a.bubble-search-site")?, Scope::Site)?;
         let paths =
             Self::make_indexables(html, Selector::parse("a.bubble-search-path")?, Scope::Path)?;
+        let pages = pages.into_iter().chain(sites).chain(paths).collect();
+        Ok(pages)
+    }
+
+    pub fn parse_excludes(html: &Html) -> Result<Vec<Self>, IndexableParseError> {
+        let pages =
+            Self::make_indexables(html, Selector::parse("a.bubble-exclude-page")?, Scope::Page)?;
+        let sites =
+            Self::make_indexables(html, Selector::parse("a.bubble-exclude-site")?, Scope::Site)?;
+        let paths =
+            Self::make_indexables(html, Selector::parse("a.bubble-exclude-path")?, Scope::Path)?;
         let pages = pages.into_iter().chain(sites).chain(paths).collect();
         Ok(pages)
     }
@@ -68,7 +79,7 @@ mod tests {
         </html>
         "#;
         let document = Html::parse_document(html);
-        let indexables = Indexable::parse_html(&document);
+        let indexables = Indexable::parse_indexables(&document);
         assert_eq!(
             indexables,
             Ok(vec![Indexable {
@@ -90,7 +101,39 @@ mod tests {
         </html>
         "#;
         let document = Html::parse_document(html);
-        let indexables = Indexable::parse_html(&document);
+        let indexables = Indexable::parse_indexables(&document);
+        assert_eq!(
+            indexables,
+            Ok(vec![
+                Indexable {
+                    uri: "https://example.com/a".parse().unwrap(),
+                    scope: Scope::Page,
+                },
+                Indexable {
+                    uri: "https://example.com".parse().unwrap(),
+                    scope: Scope::Site,
+                },
+                Indexable {
+                    uri: "https://example.com/b".parse().unwrap(),
+                    scope: Scope::Path,
+                }
+            ])
+        );
+    }
+
+    #[test]
+    fn test_parse_exclude_mixture() {
+        let html = r#"
+        <html>
+            <body>
+                <a class="bubble-exclude-page" href="https://example.com/a">Example</a>
+                <a class="bubble-exclude-site" href="https://example.com">Example</a>
+                <a class="bubble-exclude-path" href="https://example.com/b">Example</a>
+            </body>
+        </html>
+        "#;
+        let document = Html::parse_document(html);
+        let indexables = Indexable::parse_excludes(&document);
         assert_eq!(
             indexables,
             Ok(vec![
